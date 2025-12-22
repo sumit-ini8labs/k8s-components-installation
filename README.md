@@ -1,6 +1,10 @@
-# Prepare Inventory
-Create or edit the inventory.ini file for your cluster. Replace the IP addresses with your nodes’ IPs:
+# Kubernetes Cluster Deployment with Kubespray
 
+## 1️⃣ Prepare Inventory
+
+Create or edit the `inventory.ini` file for your cluster. Replace the IP addresses with your nodes’ IPs:
+
+```ini
 [all]
 master1 ansible_host=10.42.0.51 ip=10.42.0.51
 master2 ansible_host=10.42.0.52 ip=10.42.0.52
@@ -29,27 +33,42 @@ worker3
 [k8s_cluster:children]
 kube_control_plane
 kube_node
+```
 
-# Configure Cilium
+---
 
-Edit /kubespray/inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yaml and set the network plugin to Cilium:
+## 2️⃣ Configure Cilium
 
+Edit `/kubespray/inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yaml` and set the network plugin to Cilium:
+
+```yaml
 kube_network_plugin: cilium
 cilium_kube_proxy_replacement: true
+```
 
-This enables Cilium and replaces kube-proxy with Cilium’s eBPF mode.
+> This enables Cilium and replaces kube-proxy with Cilium’s eBPF mode.
 
-# Install Python Dependencies
+---
+
+## 3️⃣ Install Python Dependencies
+
+```bash
 # Upgrade pip
 pip install --upgrade pip
 
 # Install Kubespray requirements
 pip install -r /kubespray/requirements.txt
 
-# create and activate virtual environment
+# Optional: create and activate virtual environment
 python3 -m venv kubespray-venv
 source kubespray-venv/bin/activate
-# Deploy Kubernetes Cluster
+```
+
+---
+
+## 4️⃣ Deploy Kubernetes Cluster
+
+```bash
 cd /kubespray
 
 ansible-playbook \
@@ -57,10 +76,32 @@ ansible-playbook \
   --become \
   --become-user=root \
   cluster.yml
+```
 
-# Add New Worker Nodes
-Add the new worker node(s) in the inventory file under [kube_node]:
+* `--become` → use sudo
+* `--become-user=root` → run tasks as root
+
+---
+
+## 5️⃣ Add New Worker Nodes
+
+1. Add the new worker node(s) in the inventory file under `[kube_node]`:
+
+```ini
 worker4 ansible_host=10.42.0.57 ip=10.42.0.57
-Run the scale playbook:
+```
 
+2. Run the **scale playbook**:
+
+```bash
 ansible-playbook -i inventory/mycluster/inventory.ini scale.yml -b -v
+
+```
+
+* `-b` → become root
+* `-v` → verbose
+* `--limit` → ensures only the new node(s) are added
+
+---
+
+✅ This setup deploys a **3-master, 3-worker Kubernetes cluster** with **Cilium** as the CNI plugin and allows **scaling by adding new worker nodes**.
