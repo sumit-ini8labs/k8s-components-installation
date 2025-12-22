@@ -210,21 +210,135 @@ metadata:
   name: nats
   namespace: nats
 spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: Parallel
   replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: nats
+      app.kubernetes.io/instance: nats
+      app.kubernetes.io/name: nats
   serviceName: nats-headless
   template:
+    metadata:
+      annotations:
+        checksum/config: b3ca3414bba842398f9ea7b7a9c9590d6352cb7d5dab9454c83a12f6f1a7179a
+        kubectl.kubernetes.io/restartedAt: "2025-12-19T15:31:00Z"
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/component: nats
+        app.kubernetes.io/instance: nats
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: nats
+        app.kubernetes.io/version: 2.12.3
+        helm.sh/chart: nats-2.12.3
     spec:
       containers:
-      - name: nats
-        image: nats:2.12.3-alpine
-        args:
+      - args:
         - --config
         - /etc/nats-config/nats.conf
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: SERVER_NAME
+          value: $(POD_NAME)
+        image: nats:2.12.3-alpine
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - nats-server
+              - -sl=ldm=/var/run/nats/nats.pid
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz?js-enabled-only=true
+            port: monitor
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: nats
+        ports:
+        - containerPort: 4222
+          name: nats
+          protocol: TCP
+        - containerPort: 8222
+          name: monitor
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz?js-server-only=true
+            port: monitor
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources: {}
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /healthz
+            port: monitor
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
         volumeMounts:
-        - name: nats-jetstream-data
-          mountPath: /data/jetstream
+        - mountPath: /etc/nats-config
+          name: config
+        - mountPath: /var/run/nats
+          name: pid
+        - mountPath: /data/jetstream
+          name: nats-jetstream-data ----------->>>>>>
+      - args:
+        - -pid
+        - /var/run/nats/nats.pid
+        - -config
+        - /etc/nats-config/nats.conf
+        image: natsio/nats-server-config-reloader:0.21.1
+        imagePullPolicy: IfNotPresent
+        name: reloader
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/nats
+          name: pid
+        - mountPath: /etc/nats-config
+          name: config
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      shareProcessNamespace: true
+      terminationGracePeriodSeconds: 60
       volumes:
+      - configMap:
+          defaultMode: 420
+          name: nats-config
+        name: config
+      - emptyDir: {}
+        name: pid
       - name: nats-jetstream-data
         persistentVolumeClaim:
-          claimName: nats-jetstream-pvc
+          claimName: nats-jetstream-pvc ------------->>>>>>>>>
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
 ```
