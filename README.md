@@ -1,5 +1,5 @@
-# k8s-components-installation
-# prepare inventory.ini file and replace ip of your node (3 master and 3 worker)
+# Prepare Inventory
+Create or edit the inventory.ini file for your cluster. Replace the IP addresses with your nodes’ IPs:
 
 [all]
 master1 ansible_host=10.42.0.51 ip=10.42.0.51
@@ -30,21 +30,27 @@ worker3
 kube_control_plane
 kube_node
 
+# Configure Cilium
 
-# modify this 2 line for cilium in k8s-cluster.yaml (/kubespray/inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yaml)
+Edit /kubespray/inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yaml and set the network plugin to Cilium:
 
 kube_network_plugin: cilium
 cilium_kube_proxy_replacement: true
 
+This enables Cilium and replaces kube-proxy with Cilium’s eBPF mode.
 
-# ansible commands to run the playbook
-
+# Install Python Dependencies
+# Upgrade pip
 pip install --upgrade pip
+
+# Install Kubespray requirements
 pip install -r /kubespray/requirements.txt
+
+# create and activate virtual environment
 python3 -m venv kubespray-venv
 source kubespray-venv/bin/activate
-
-cd /kubespray 
+# Deploy Kubernetes Cluster
+cd /kubespray
 
 ansible-playbook \
   -i inventory/mycluster/inventory.ini \
@@ -52,11 +58,9 @@ ansible-playbook \
   --become-user=root \
   cluster.yml
 
-
-# To add worker nodes (add new worker ip in the inventory.ini file)
+# Add New Worker Nodes
+Add the new worker node(s) in the inventory file under [kube_node]:
+worker4 ansible_host=10.42.0.57 ip=10.42.0.57
+Run the scale playbook:
 
 ansible-playbook -i inventory/mycluster/inventory.ini scale.yml -b -v
-
-  
-
-
