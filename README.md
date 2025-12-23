@@ -73,21 +73,18 @@ metadata:
   name: ceph-mgr
   namespace: monitoring
   labels:
-    release: monitoring  # must match Prometheus Helm release
+    release: monitoring   
 spec:
   namespaceSelector:
     matchNames:
-      - rook-ceph
+    - rook-ceph
   selector:
     matchLabels:
       app: rook-ceph-mgr
   endpoints:
-    - port: http-metrics  # must match service port name
-      path: /metrics
-      interval: 15s
-  relabelings:
-    - targetLabel: cluster
-      replacement: rook-ceph
+  - port: http-metrics
+    interval: 30s
+    path: /metrics
 ```
 
 Apply the ServiceMonitor:
