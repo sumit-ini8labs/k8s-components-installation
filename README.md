@@ -100,13 +100,17 @@ kubectl apply -f ceph-mgr-servicemonitor.yaml
 Port-forward Prometheus:
 
 ```bash
-kubectl -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090
+kubectl -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 19090:9090
+```
+```
+ssh -L 19090:localhost:19090 root@<JUMP_SERVER_IP>
+
 ```
 
 Open in browser:
 
 ```
-http://localhost:9090/targets
+http://localhost:19090
 ```
 
 Check for the job `ceph-mgr` → it should be `UP`.
