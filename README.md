@@ -44,6 +44,8 @@ Edit `/kubespray/inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yaml` an
 ```yaml
 kube_network_plugin: cilium
 cilium_kube_proxy_replacement: true
+kube_owner: root
+
 ```
 
 > This enables Cilium and replaces kube-proxy with Cilium’s eBPF mode.
