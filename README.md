@@ -27,6 +27,12 @@ kubectl create secret generic thanos-objstore \
 
 
 ```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+  labels:
+    prometheus: prometheus-k8s
+  name: prometheus-k8s
+spec:
 spec:
   evaluationInterval: 30s
   portName: web
@@ -39,15 +45,6 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       app.kubernetes.io/name: prometheus
-  storage:
-    volumeClaimTemplate:
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 20Gi
-        storageClassName: longhorn
 ----------->>>>>>>>>>
   thanos: 
     blockSize: 2m
