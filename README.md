@@ -12,5 +12,5 @@ kubectl create -f manifests/
 
 kubectl create -f manifests/setup -f manifests
 
-
+# Remove Kube-Prometheus
 kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
