@@ -1,6 +1,6 @@
 # k8s-components-installation
 
-'''helm repo add grafana https://grafana.github.io/helm-charts'''
+helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 kubectl create namespace monitoring
 helm search repo grafana/grafana
