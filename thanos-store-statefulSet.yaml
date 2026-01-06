@@ -127,3 +127,66 @@ spec:
       resources:
         requests:
           storage: 5Gi
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations: {}
+  labels:
+    app.kubernetes.io/component: object-store-gateway
+    app.kubernetes.io/instance: thanos-store
+    app.kubernetes.io/name: thanos-store
+    app.kubernetes.io/version: v0.31.0
+  name: thanos-store
+  namespace: monitoring
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/component: object-store-gateway
+    app.kubernetes.io/instance: thanos-store
+    app.kubernetes.io/name: thanos-store
+    app.kubernetes.io/version: v0.31.0
+  name: thanos-store
+  namespace: monitoring
+spec:
+  endpoints:
+  - port: http
+    relabelings:
+    - action: replace
+      separator: /
+      sourceLabels:
+      - namespace
+      - pod
+      targetLabel: instance
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: thanos-store
+      app.kubernetes.io/name: thanos-store
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: object-store-gateway
+    app.kubernetes.io/instance: thanos-store
+    app.kubernetes.io/name: thanos-store
+    app.kubernetes.io/version: v0.31.0
+  name: thanos-store
+  namespace: monitoring
+spec:
+  clusterIP: None
+  ports:
+  - name: grpc
+    port: 10901
+    targetPort: 10901
+  - name: http
+    port: 10902
+    targetPort: 10902
+  selector:
+    app.kubernetes.io/component: object-store-gateway
+    app.kubernetes.io/instance: thanos-store
+    app.kubernetes.io/name: thanos-store              
