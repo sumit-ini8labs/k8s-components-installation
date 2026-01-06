@@ -43,8 +43,8 @@ The following diagram illustrates how Thanos extends Prometheus to provide a glo
 
 ```bash
 helm install my-release oci://registry-1.docker.io/bitnamicharts/thanos  -n monitoring
-
 ```
+
 ```bash
 k edit prometheus prometheus-k8s -oyaml -n monitoring
 ```
