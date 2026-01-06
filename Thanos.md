@@ -101,7 +101,7 @@ kubectl port-forward svc/minio-console 9443:9443 -n monitoring
 * Username: `minioadmin`
 * Password: `minioadmin`
 
-Create a bucket named:
+Create a bucket and Access_key:
 
 ```
 thanos
@@ -118,8 +118,8 @@ type: S3
 config:
   bucket: thanos
   endpoint: minio.monitoring.svc.cluster.local:9000
-  access_key: minioadmin
-  secret_key: minioadmin
+  access_key: jsdafioweursndfklsd
+  secret_key: fwae89w7r9798dfasdjfljsdf8wuo
   insecure: true
 ```
 
