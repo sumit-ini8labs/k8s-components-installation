@@ -213,6 +213,8 @@ kubectl get pods -n monitoring | grep thanos
 
 ## Step 7: Install Thanos Store Gateway
 
+make sure the s3 secret name is correct
+
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-store-statefulSet.yaml
 ```
@@ -220,6 +222,8 @@ kubectl apply -f https://raw.githubusercontent.com/sumit-ini8labs/k8s-components
 ---
 
 ## Step 8: Install Thanos Compactor
+
+make sure the s3 secret name is correct
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-compactor.yaml
