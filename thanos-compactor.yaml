@@ -23,7 +23,7 @@ spec:
           - --wait                       # 🔁 keep running continuously
           - --log.level=info
           - --data-dir=/var/thanos/compact
-          - --objstore.config-file=/etc/thanos/thanos.yaml
+          - --objstore.config-file=/etc/thanos/objstore.yaml
           - --retention.resolution-raw=7d
           - --retention.resolution-5m=30d
           - --retention.resolution-1h=180d
