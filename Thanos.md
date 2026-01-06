@@ -27,25 +27,16 @@ Prometheus (HA) + Sidecar
 
 ---
 
-Thanos Components (Short Description)
-Prometheus
-* Collects and stores metrics locally and evaluates alerting/recording rules.
-Thanos Sidecar
-* Uploads Prometheus data to object storage and exposes metrics for global querying.
-Object Storage (S3 / MinIO)
-* Central, durable storage for long-term metrics and compacted blocks.
-Thanos Store Gateway
-* Reads historical metrics from object storage and serves them to Thanos Query.
-Thanos Compactor
-* Compacts, downsamples, and applies retention policies to stored metrics.
-Thanos Query
-* Global query layer that aggregates and deduplicates metrics from all sources.
-Thanos Query Frontend
-* Improves query performance by caching and splitting long-range queries.
-Thanos Ruler
-* Evaluates recording and alerting rules centrally and sends alerts to Alertmanager.
-Alertmanager
-* Handles alert deduplication, routing, and notifications (external to Thanos).
+- **Prometheus** – Collects and stores metrics locally and evaluates rules.
+- **Thanos Sidecar** – Uploads metrics to object storage and enables global queries.
+- **Object Storage** – Durable long-term storage for metrics data.
+- **Store Gateway** – Serves historical metrics from object storage.
+- **Compactor** – Compacts, downsamples, and applies retention policies.
+- **Thanos Query** – Aggregates and deduplicates metrics globally.
+- **Query Frontend** – Caches and splits queries for performance.
+- **Thanos Ruler** – Evaluates rules and sends alerts.
+- **Alertmanager** – Routes and manages alerts.
+
 
 
 ## Prerequisites
@@ -202,7 +193,7 @@ Verify sidecar:
 kubectl get pods -n monitoring
 ```
 
-Prometheus pod should show **2/2 containers**.
+Prometheus pod should show **3/3 containers**.
 
 ---
 
