@@ -1,34 +1,43 @@
 # k8s-components-installation
 
-                              ┌────────────────────┐
-                              │      Grafana       │
-                              │  (Dashboards)      │
-                              └─────────▲──────────┘
-                                        │
-                           ┌────────────┴───────────┐
-                           │       Thanos Query     │
-                           │  (Global Query Layer)  │
-                           └───────▲────────▲───────┘
-                                   │        │
-             ┌─────────────────────┘        └─────-───────────────┐
-             │                                                    │
+# Thanos Monitoring Architecture
+
+This repository contains the configuration and architectural overview for our highly available, long-term metrics storage solution using **Thanos** and **Prometheus**.
+
+## Architecture Overview
+
+The following diagram illustrates how Thanos extends Prometheus to provide a global query view and unlimited retention by leveraging Object Storage.
+
+```text
+                        ┌────────────────────┐
+                        │      Grafana       │
+                        │  (Dashboards)      │
+                        └─────────▲──────────┘
+                                  │
+                     ┌────────────┴───────────┐
+                     │      Thanos Query      │
+                     │  (Global Query Layer)  │
+                     └───────▲────────▲───────┘
+                             │        │
+        ┌─────────────────────┘        └─────-───────────────┐
+        │                                                    │
 ┌────────────┴────────────┐                     ┌─────────────────┴─────────────────┐
-│ Prometheus + Sidecar    │                     │        Store Gateway              │
+│ Prometheus + Sidecar    │                     │         Store Gateway             │
 │ (Live Metrics + Upload) │                     │ (Historical Metrics from S3)      │
 └────────────▲────────────┘                     └─────────────────▲─────────────────┘
-             │                                                    │
-             └──────────────────┬─────────────────────────────────┘
-                                │
-                      ┌─────────▼─────────┐
-                      │  Object Storage   │
-                      │ (MinIO / S3 / GCS)│
-                      └─────────▲─────────┘
-                                │
-                      ┌─────────┴────────┐
-                      │     Compactor    │
-                      │ (Retention &     │
-                      │  Downsampling)   │
-                      └──────────────────┘
+        │                                                    │
+        └──────────────────┬─────────────────────────────────┘
+                           │
+                 ┌─────────▼─────────┐
+                 │  Object Storage   │
+                 │ (MinIO / S3 / GCS)│
+                 └─────────▲─────────┘
+                           │
+                 ┌─────────┴────────┐
+                 │     Compactor    │
+                 │ (Retention &     │
+                 │  Downsampling)   │
+                 └──────────────────┘
 
 
 
