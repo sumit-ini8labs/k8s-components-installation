@@ -20,7 +20,6 @@ spec:
           - query
           - --http-address=0.0.0.0:9090
           - --grpc-address=0.0.0.0:10901
-          - --endpoint=dnssrv+_grpc._tcp.prometheus-operated.monitoring.svc.cluster.local
           - --endpoint=dnssrv+_grpc._tcp.thanos-store.monitoring.svc.cluster.local
         ports:
           - name: http
