@@ -1,6 +1,6 @@
 # Thanos on Kubernetes (K8s)
 
-This document provides a **step-by-step guide** to install **Thanos on Kubernetes** using **Prometheus Operator** and **MinIO (S3-compatible object storage)**. It includes **all required commands**, configuration files, and verification steps.
+This document provides a **step-by-step guide** to install **Thanos on Kubernetes** using **Prometheus Operator (kube‑prometheus‑stack)** and **MinIO (S3‑compatible object storage)**. It includes **all required commands**, configuration files, and verification steps.
 
 ---
 
@@ -17,46 +17,54 @@ This document provides a **step-by-step guide** to install **Thanos on Kubernete
                      │  (Global Query Layer)  │
                      └───────▲────────▲───────┘
                              │        │
-        ┌─────────────────────┘        └─────-───────────────┐
-        │                                                    │
-┌────────────┴────────────┐                     ┌─────────────────┴─────────────────┐
-│ Prometheus + Sidecar    │                     │         Store Gateway             │
-│ (Live Metrics + Upload) │                     │ (Historical Metrics from S3)      │
-└────────────▲────────────┘                     └─────────────────▲─────────────────┘
-        │                                                    │
-        └──────────────────┬─────────────────────────────────┘
+        ┌─────────────────────┘        └─────────────────────────────┐
+        │                                                             │
+┌────────────┴────────────┐                     ┌───────────────────┴───────────────────┐
+│ Prometheus + Sidecar    │                     │           Store Gateway               │
+│ (Live Metrics + Upload) │                     │ (Historical Metrics from Object Store)│
+└────────────▲────────────┘                     └───────────────────▲───────────────────┘
+        │                                                             │
+        └──────────────────┬─────────────────────────────────────────┘
                            │
                  ┌─────────▼─────────┐
                  │  Object Storage   │
                  │ (MinIO / S3 / GCS)│
                  └─────────▲─────────┘
                            │
-                 ┌─────────┴────────┐
-                 │     Compactor    │
-                 │ (Retention &     │
-                 │  Downsampling)   │
-                 └──────────────────┘
+                 ┌─────────┴─────────┐
+                 │     Compactor     │
+                 │ (Retention &      │
+                 │  Downsampling)    │
+                 └───────────────────┘
 ```
 
 ---
 
-- **Prometheus** – Collects and stores metrics locally and evaluates rules.
-- **Thanos Sidecar** – Uploads metrics to object storage and enables global queries.
-- **Object Storage** – Durable long-term storage for metrics data.
-- **Store Gateway** – Serves historical metrics from object storage.
-- **Compactor** – Compacts, downsamples, and applies retention policies.
-- **Thanos Query** – Aggregates and deduplicates metrics globally.
-- **Query Frontend** – Caches and splits queries for performance.
-- **Thanos Ruler** – Evaluates rules and sends alerts.
-- **Alertmanager** – Routes and manages alerts.
+## Components
 
+* **Prometheus** – Scrapes metrics and evaluates rules
+* **Thanos Sidecar** – Uploads Prometheus blocks to object storage and exposes gRPC
+* **Object Storage (MinIO)** – Durable long‑term metrics storage
+* **Store Gateway** – Serves historical data from object storage
+* **Compactor** – Compacts blocks, downsamples, and enforces retention
+* **Thanos Query** – Aggregates and deduplicates metrics globally
+* **Query Frontend** – (Optional) Query caching and splitting
+* **Thanos Ruler** – (Optional) Rule evaluation and alerting
+* **Alertmanager** – Routes alerts
 
+---
+
+## Prerequisites
+
+* Kubernetes cluster
+* `kubectl`, `helm`
+* kube‑prometheus‑stack installed in `monitoring` namespace
 
 ---
 
 ## Step 3: Install MinIO (Object Storage for Thanos)
 
-### Add MinIO Helm Repo
+### Add MinIO Helm Repository
 
 ```bash
 helm repo add minio https://charts.min.io/
@@ -74,7 +82,9 @@ helm install minio minio/minio \
   --set persistence.size=10Gi
 ```
 
-Verify:
+> ⚠️ **Production note**: Use Kubernetes secrets and stronger credentials in real environments.
+
+### Verify
 
 ```bash
 kubectl get pods -n monitoring | grep minio
@@ -83,19 +93,15 @@ kubectl get svc -n monitoring | grep minio
 
 ### Access MinIO Console
 
-Port-forward:
-
 ```bash
 kubectl port-forward svc/minio-console 9443:9443 -n monitoring
 ```
-
-Login:
 
 * URL: [https://localhost:9443](https://localhost:9443)
 * Username: `minioadmin`
 * Password: `minioadmin`
 
-Create bucket:
+Create a bucket named:
 
 ```
 thanos
@@ -117,7 +123,7 @@ config:
   insecure: true
 ```
 
-Create secret:
+Create the secret:
 
 ```bash
 kubectl create secret generic thanos-objstore \
@@ -135,7 +141,7 @@ kubectl get secret thanos-objstore -n monitoring
 
 ## Step 5: Enable Thanos Sidecar in Prometheus
 
-Edit Prometheus CR:
+Edit the Prometheus CR:
 
 ```bash
 kubectl edit prometheus kube-prometheus-kube-prome-prometheus -n monitoring
@@ -154,33 +160,44 @@ spec:
 
 Save and exit.
 
-Verify sidecar:
+Verify:
 
 ```bash
 kubectl get pods -n monitoring
 ```
 
-Prometheus pod should show **3/3 containers**.
+Prometheus pods should show **3/3 containers** (Prometheus + Config Reloader + Thanos Sidecar).
 
 ---
 
 ## Step 6: Install Thanos Query
 
-Install Thanos Query: for multi cluster setup add the ip:port in arg section in query deployment
+Thanos Query connects to:
 
-```ymal
-    spec:
-      containers:
-      - name: thanos-query
-        image: quay.io/thanos/thanos:v0.39.0
-        args:
-          - query
-          - --http-address=0.0.0.0:9090
-          - --grpc-address=0.0.0.0:10901
-          - --endpoint=98.70.25.226:10901  ------>>>>>>>>> add thanos-store-gateway of cluster B address
-          - --endpoint=dnssrv+_grpc._tcp.prometheus-operated.monitoring.svc.cluster.local
-          - --endpoint=dnssrv+_grpc._tcp.thanos-store.monitoring.svc.cluster.local
+* Prometheus sidecars (live data)
+* Store Gateways (historical data)
+* Optional remote clusters (multi‑cluster)
+
+### Example Configuration (Multi‑Cluster)
+
+```yaml
+spec:
+  containers:
+  - name: thanos-query
+    image: quay.io/thanos/thanos:v0.39.0
+    args:
+      - query
+      - --http-address=0.0.0.0:9090
+      - --grpc-address=0.0.0.0:10901
+      # Remote cluster store gateway / sidecar
+      - --endpoint=98.70.25.226:10901
+      # Local Prometheus sidecars
+      - --endpoint=dnssrv+_grpc._tcp.prometheus-operated.monitoring.svc.cluster.local
+      # Local store gateway
+      - --endpoint=dnssrv+_grpc._tcp.thanos-store.monitoring.svc.cluster.local
 ```
+
+Apply:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-query.yaml
@@ -197,19 +214,20 @@ kubectl get pods -n monitoring | grep thanos
 ## Step 7: Install Thanos Store Gateway
 
 ```bash
-kubectl -f apply https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-store-statefulSet.yaml
+kubectl apply -f https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-store-statefulSet.yaml
 ```
 
 ---
 
-## Step 9: Install thanos compactor
+## Step 8: Install Thanos Compactor
+
 ```bash
-https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-compactor.yaml
+kubectl apply -f https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-compactor.yaml
 ```
 
-## Step 8: Access Thanos Query UI
+---
 
-Port-forward:
+## Step 9: Access Thanos Query UI
 
 ```bash
 kubectl port-forward svc/thanos-query 9090:9090 -n monitoring
@@ -223,9 +241,9 @@ http://localhost:9090
 
 ---
 
-## Step 9: Configure Grafana with Thanos
+## Step 10: Configure Grafana with Thanos
 
-Port-forward Grafana:
+Port‑forward Grafana:
 
 ```bash
 kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring
@@ -243,20 +261,20 @@ kubectl get secret kube-prometheus-grafana -n monitoring \
 
 ### Add Data Source
 
-* Type: Prometheus
+* Type: **Prometheus**
 * URL:
 
 ```
 http://thanos-query.monitoring.svc.cluster.local:9090
 ```
 
-* Save & Test
+Click **Save & Test**.
 
 ---
 
-## Step 10: Verification
+## Step 11: Verification
 
-Check targets:
+Check connected stores:
 
 ```bash
 kubectl port-forward svc/thanos-query 9090:9090 -n monitoring
@@ -270,8 +288,9 @@ http://localhost:9090/stores
 
 Expected:
 
-* Prometheus sidecar: UP
-* Store Gateway (if installed): UP
+* ✅ Prometheus Sidecar – UP
+* ✅ Store Gateway – UP
+* ✅ Remote clusters (if configured) – UP
 
 ---
 
@@ -280,13 +299,21 @@ Expected:
 ### No Data in Grafana
 
 * Ensure Prometheus sidecar is running
-* Verify bucket exists in MinIO
-* Check Thanos Query `/stores`
+* Verify `thanos` bucket exists in MinIO
+* Check Thanos Query `/stores` page
 
 ### Thanos Sidecar CrashLoop
 
 ```bash
-kubectl logs prometheus-<pod> -c thanos-sidecar -n monitoring
+kubectl logs prometheus-<pod-name> -c thanos-sidecar -n monitoring
 ```
 
-✅ Thanos is now successfully installed on Kubernetes!
+### Store Gateway Not Showing
+
+* Verify object storage secret
+* Ensure compactor has write access
+* Check Store Gateway logs
+
+---
+
+✅ **Thanos is now correctly installed and configured on Kubernetes with MinIO and Prometheus Operator.**
