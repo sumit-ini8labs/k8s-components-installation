@@ -7,22 +7,35 @@ This document provides a **step-by-step guide** to install **Thanos on Kubernete
 ## Architecture Overview
 
 ```
-Prometheus (HA) + Sidecar
-            |
-            v
-        Object Storage
-            ^
-            |
-        Compactor
-            |
-            v
-      Store Gateway
-            |
-            v
-        Thanos Query
-            |
-            v
-          Grafana
+                        ┌────────────────────┐
+                        │      Grafana       │
+                        │  (Dashboards)      │
+                        └─────────▲──────────┘
+                                  │
+                     ┌────────────┴───────────┐
+                     │      Thanos Query      │
+                     │  (Global Query Layer)  │
+                     └───────▲────────▲───────┘
+                             │        │
+        ┌─────────────────────┘        └─────-───────────────┐
+        │                                                    │
+┌────────────┴────────────┐                     ┌─────────────────┴─────────────────┐
+│ Prometheus + Sidecar    │                     │         Store Gateway             │
+│ (Live Metrics + Upload) │                     │ (Historical Metrics from S3)      │
+└────────────▲────────────┘                     └─────────────────▲─────────────────┘
+        │                                                    │
+        └──────────────────┬─────────────────────────────────┘
+                           │
+                 ┌─────────▼─────────┐
+                 │  Object Storage   │
+                 │ (MinIO / S3 / GCS)│
+                 └─────────▲─────────┘
+                           │
+                 ┌─────────┴────────┐
+                 │     Compactor    │
+                 │ (Retention &     │
+                 │  Downsampling)   │
+                 └──────────────────┘
 ```
 
 ---
@@ -38,52 +51,6 @@ Prometheus (HA) + Sidecar
 - **Alertmanager** – Routes and manages alerts.
 
 
-
-## Prerequisites
-
-* Kubernetes cluster (K3s / K8s v1.24+ recommended)
-* kubectl configured
-* Helm v3 installed
-* Internet access from cluster
-
-Check versions:
-
-```bash
-kubectl version
-helm version
-```
-
----
-
-## Step 1: Create Namespace
-
-```bash
-kubectl create namespace monitoring
-```
-
----
-
-## Step 2: Install Prometheus Operator (kube-prometheus-stack)
-
-Add Helm repo:
-
-```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-```
-
-Install:
-
-```bash
-helm install kube-prometheus prometheus-community/kube-prometheus-stack \
-  -n monitoring
-```
-
-Verify:
-
-```bash
-kubectl get pods -n monitoring
-```
 
 ---
 
@@ -199,22 +166,24 @@ Prometheus pod should show **3/3 containers**.
 
 ## Step 6: Install Thanos Query
 
-Add Bitnami repo:
+Install Thanos Query: for multi cluster setup add the ip:port in arg section in query deployment
 
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo update
+```ymal
+    spec:
+      containers:
+      - name: thanos-query
+        image: quay.io/thanos/thanos:v0.39.0
+        args:
+          - query
+          - --http-address=0.0.0.0:9090
+          - --grpc-address=0.0.0.0:10901
+          - --endpoint=98.70.25.226:10901  ------>>>>>>>>> add thanos-store-gateway of cluster B address
+          - --endpoint=dnssrv+_grpc._tcp.prometheus-operated.monitoring.svc.cluster.local
+          - --endpoint=dnssrv+_grpc._tcp.thanos-store.monitoring.svc.cluster.local
 ```
 
-Install Thanos Query:
-
 ```bash
-helm install thanos-query bitnami/thanos \
-  -n monitoring \
-  --set query.enabled=true \
-  --set query.replicaCount=1 \
-  --set query.dnsDiscovery.sidecarsService=kube-prometheus-kube-prome-prometheus \
-  --set query.dnsDiscovery.sidecarsNamespace=monitoring
+kubectl apply -f https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-query.yaml
 ```
 
 Verify:
@@ -225,16 +194,18 @@ kubectl get pods -n monitoring | grep thanos
 
 ---
 
-## Step 7: (Optional) Install Thanos Store Gateway
+## Step 7: Install Thanos Store Gateway
 
 ```bash
-helm upgrade --install thanos-store bitnami/thanos \
-  -n monitoring \
-  --set storegateway.enabled=true \
-  --set objstoreConfig.existingSecret=thanos-objstore
+kubectl -f apply https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-store-statefulSet.yaml
 ```
 
 ---
+
+## Step 9: Install thanos compactor
+```bash
+https://raw.githubusercontent.com/sumit-ini8labs/k8s-components-installation/refs/heads/thanos-installation/thanos-compactor.yaml
+```
 
 ## Step 8: Access Thanos Query UI
 
@@ -317,31 +288,5 @@ Expected:
 ```bash
 kubectl logs prometheus-<pod> -c thanos-sidecar -n monitoring
 ```
-
-### Metrics Missing
-
-* Ensure `insecure: true` for MinIO
-* Verify endpoint and bucket name
-
----
-
-## Cleanup
-
-```bash
-helm uninstall kube-prometheus -n monitoring
-helm uninstall minio -n monitoring
-helm uninstall thanos-query -n monitoring
-kubectl delete namespace monitoring
-```
-
----
-
-## References
-
-* [https://thanos.io](https://thanos.io)
-* [https://github.com/prometheus-operator/prometheus-operator](https://github.com/prometheus-operator/prometheus-operator)
-* [https://artifacthub.io/packages/helm/bitnami/thanos](https://artifacthub.io/packages/helm/bitnami/thanos)
-
----
 
 ✅ Thanos is now successfully installed on Kubernetes!
