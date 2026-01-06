@@ -47,7 +47,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: thanos-compact
+  name: thanos-compact-pvc
   namespace: monitoring
 spec:
   accessModes: [ "ReadWriteOnce" ]
