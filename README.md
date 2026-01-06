@@ -1,5 +1,37 @@
 # k8s-components-installation
 
+                        ┌────────────────────┐
+                        │      Grafana       │
+                        │ (PromQL via Query) │
+                        └─────────▲──────────┘
+                                  │
+                         ┌────────┴────────┐
+                         │   Thanos Query  │
+                         │ (Global Query)  │
+                         └───▲────────▲────┘
+                             │        │
+            ┌────────────────┘        └────────────────┐
+            │                                          │
+┌───────────┴───────────┐                 ┌────────────┴────────────┐
+│  Prometheus + Sidecar │                 │     Store Gateway       │
+│  (real-time metrics)  │                 │ (historical metrics)    │
+└───────────▲───────────┘                 └────────────-▲───────────┘
+            │                                           │
+            │                                           │
+            └──────────────┬────────────────────────────┘
+                           │
+                 ┌─────────▼─────────┐
+                 │  Object Storage   │
+                 │ (MinIO / S3 / GCS)│
+                 └─────────▲─────────┘
+                           │
+                 ┌─────────┴─────────┐
+                 │     Compactor     │
+                 │ (downsampling &  │
+                 │   retention)     │
+                 └──────────────────┘
+
+
 ```bash
 helm install my-release oci://registry-1.docker.io/bitnamicharts/thanos  -n monitoring
 
