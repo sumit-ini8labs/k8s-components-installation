@@ -219,7 +219,7 @@ Expected result:
 ### Check Data in VictoriaMetrics UI
 
 ```
-http://98.70.41.123:8481/select/multitenant/vmui/
+http://vmselect:8481/select/multitenant/vmui/
 ```
 
 Run a test query:
@@ -244,10 +244,10 @@ up{vm_account_id="2"}
 
 ## Summary
 
-# Centralized metrics storage using VictoriaMetrics
-# Multitenancy via `vm_account_id`
-# Multi-cluster visibility in Grafana
-# Scalable and production-ready monitoring architecture
+* Centralized metrics storage using VictoriaMetrics
+* Multitenancy via `vm_account_id`
+* Multi-cluster visibility in Grafana
+* Scalable and production-ready monitoring architecture
 
 ---
 
