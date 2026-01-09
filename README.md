@@ -39,7 +39,7 @@ The following configuration sends metrics from **Prometheus** to **VictoriaMetri
 
 ```yaml
 remoteWrite:
-  - url: http://98.70.41.123:8480/insert/multitenant/prometheus/api/v1/write
+  - url: http://vminsert:8480/insert/multitenant/prometheus/api/v1/write
     queueConfig:
       capacity: 20000
       maxSamplesPerSend: 10000
@@ -129,7 +129,7 @@ In **Grafana → Data Sources → Add data source → Prometheus**
 **URL:**
 
 ```
-http://98.70.41.123:8481/select/multitenant/prometheus
+http://vmselect:8481/select/multitenant/prometheus
 ```
 
 * Uses **vmselect** for querying metrics
@@ -244,10 +244,10 @@ up{vm_account_id="2"}
 
 ## Summary
 
-✔ Centralized metrics storage using VictoriaMetrics
-✔ Multitenancy via `vm_account_id`
-✔ Multi-cluster visibility in Grafana
-✔ Scalable and production-ready monitoring architecture
+# Centralized metrics storage using VictoriaMetrics
+# Multitenancy via `vm_account_id`
+# Multi-cluster visibility in Grafana
+# Scalable and production-ready monitoring architecture
 
 ---
 
