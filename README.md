@@ -1,8 +1,7 @@
 ## Install Redis for RateLimit in Envoy AI Gateway
 
-```bash
-k apply -f https://raw.githubusercontent.com/envoyproxy/ai-gateway/refs/heads/main/examples/token_ratelimit/redis.yaml
-```
+    k apply -f https://raw.githubusercontent.com/envoyproxy/ai-gateway/refs/heads/main/examples/token_ratelimit/redis.yaml
+
 -----------------
 ```bash
 helm upgrade -i aieg-crd oci://docker.io/envoyproxy/ai-gateway-crds-helm \
