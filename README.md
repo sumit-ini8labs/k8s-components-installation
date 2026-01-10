@@ -6,11 +6,14 @@
     k apply -f https://raw.githubusercontent.com/envoyproxy/ai-gateway/refs/heads/main/examples/token_ratelimit/redis.yaml
 
 2. Install crds
+   
     helm upgrade -i aieg-crd oci://docker.io/envoyproxy/ai-gateway-crds-helm \
       --version v0.0.0-latest \
       --namespace envoy-ai-gateway-system \
       --create-namespace
-3. Install envoy ai controller
+   
+4. Install envoy ai controller
+   
     helm upgrade -i aieg oci://docker.io/envoyproxy/ai-gateway-helm \
       --version v0.0.0-latest \
       --namespace envoy-ai-gateway-system \
@@ -18,12 +21,13 @@
 
     kubectl wait --timeout=2m -n envoy-ai-gateway-system deployment/ai-gateway-controller --for=condition=Available
 
-4. Take ownershiip
+6. Take ownershiip
 
     helm upgrade -i aieg-crd oci://docker.io/envoyproxy/ai-gateway-crds-helm --version v0.0.0-latest --namespace envoy-ai-gateway-system --take-ownership
     helm upgrade -i aieg oci://docker.io/envoyproxy/ai-gateway-helm --version v0.0.0-latest --namespace envoy-ai-gateway-system
 
-5. install eg
+7. install eg
+   
     helm upgrade -i eg oci://docker.io/envoyproxy/gateway-helm \
       --version v0.0.0-latest \
       --namespace envoy-gateway-system \
@@ -51,7 +55,9 @@
 
 
 ## OpenAI Configuration
+
     curl -O https://raw.githubusercontent.com/envoyproxy/ai-gateway/main/examples/basic/openai.yaml
+```
     vi openai.yaml ---->> paste openai key in secret section
 ```
     kubectl apply -f openai.yaml
