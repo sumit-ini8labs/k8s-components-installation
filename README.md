@@ -43,7 +43,7 @@ vi openai.yaml ---->> paste openai key in secret section
 ```bash
 kubectl apply -f openai.yaml
 ```
-```text
+```md
 root@sumit-thanos-vm:~/envoy-openai# k apply -f ./openai.yaml
 aigatewayroute.aigateway.envoyproxy.io/envoy-ai-gateway-basic-openai created
 aiservicebackend.aigateway.envoyproxy.io/envoy-ai-gateway-basic-openai created
