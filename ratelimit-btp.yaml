@@ -1,0 +1,37 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: openai-token-limit-policy
+  namespace: default
+spec:
+  targetRefs:
+    - name: inference-pool-with-aigwroute
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        # -------------------------------
+        # OpenAI rate limit
+        # -------------------------------
+        - clientSelectors:
+            - headers:
+                - name: x-user-id
+                  type: Distinct       # per user bucket
+                - name: x-ai-eg-model
+                  type: Exact
+                  value: gpt-4o-mini      # applies only to gpt-4o-mini
+          limit:
+            requests: 100         # 1000 total tokens per hour
+            unit: Hour
+          cost:
+            request:
+              from: Number
+              number: 0             # ignore request size
+            response:
+              from: Metadata
+              metadata:
+                namespace: io.envoy.ai_gateway
+                key: llm_total_token # counts token usage from OpenAI response
+
