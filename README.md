@@ -1,5 +1,12 @@
 # Kubernetes Cluster Deployment with Kubespray
 
+```bash
+cp -rfp inventory/sample inventory/mycluster
+```
+```bash
+cd inventory/mycluster/inventory.ini
+```
+
 ## 1️⃣ Prepare Inventory
 
 Create or edit the `inventory.ini` file for your cluster. Replace the IP addresses with your nodes’ IPs:
@@ -36,6 +43,10 @@ kube_node
 ```
 
 ---
+
+```bash
+ansible all -i inventory/mycluster/inventory.ini -m ping
+```
 
 ## 2️⃣ Configure Cilium
 
