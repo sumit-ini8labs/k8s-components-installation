@@ -1,11 +1,26 @@
 # Kubernetes Cluster Deployment with Kubespray
 
 ```bash
+git clone https://github.com/kubernetes-sigs/kubespray.git
+cd kubespray
+```
+
+```bash
 cp -rfp inventory/sample inventory/mycluster
 ```
 ```bash
 cd inventory/mycluster/inventory.ini
 ```
+
+
+## k8s Version check
+```bash
+cd kubespary
+grep "kube_version:" roles/kubespray_defaults/defaults/main/main.yml
+grep -A 5 "kubelet_checksums:" roles/kubespray_defaults/vars/main/checksums.yml | grep "amd64" -A 3
+grep "version:" galaxy.yml
+```
+
 
 ## 1️⃣ Prepare Inventory
 
