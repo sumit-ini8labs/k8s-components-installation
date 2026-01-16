@@ -132,4 +132,10 @@ ansible-playbook -i inventory/mycluster/inventory.ini scale.yml -b -v
 
 ---
 
+## Cluster cleanUP commands
+```bash
+ansible-playbook -i inventory/mycluster/inventory.ini reset.yml --become
+```
+
+
 ✅ This setup deploys a **3-master, 3-worker Kubernetes cluster** with **Cilium** as the CNI plugin and allows **scaling by adding new worker nodes**.
