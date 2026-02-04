@@ -4,14 +4,6 @@
 
 This guide documents the complete process of setting up a production-ready Kubernetes Metrics Server in a Kubespray-deployed cluster, from initial configuration to final deployment.
 
-## Prerequisites
-
-- Kubernetes cluster deployed with Kubespray
-- Kubespray v2.23+ (tested with latest)
-- Cluster with 3 master nodes and 3 worker nodes
-- Container runtime: containerd
-- Kubernetes version: v1.33.7
-
 ## Architecture
 
 ```
